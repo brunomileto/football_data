@@ -3,57 +3,74 @@ from bs4 import BeautifulSoup as bs
 from pprint import pprint
 import pandas as pd
 from datetime import datetime
+from utils import corrige_data, corrige_horario, corrige_nome_time, corrige_publico, corrige_resultado, corrige_rodada
 
 
-def corrige_publico(publico):
-    publico = publico.strip()
-    if publico == 'x':
-        publico = ''
-    return publico
+class paginas:
+
+    headers = {'User-Agent':
+               'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36'}
+
+    def __init__(self, *args, **kwargs):
+        super(CLASS_NAME, self).__init__(*args, **kwargs)
+
+    def retorna_pagina_especifica(self, url):
+        return bs(requests.get(url, headers=self.headers).content, 'html.parser')
 
 
-def corrige_nome_time(nome_time):
-    nome_time = nome_time.replace('\xa0', '')
-    nome_time = nome_time.replace('\n', '')
-    nome_time = nome_time.replace('\t', '')
-    nome_time = nome_time.strip()
-    if nome_time.find('(') > 0:
-        nome_time = nome_time[:nome_time.find('(')]
-    return nome_time
+class pag_tabela_campenatos(paginas):
+    def __init__(self, *args, **kwargs):
+        super(CLASS_NAME, self).__init__(*args, **kwargs)
+        self.url_tab_camp = url_tab_camp
+        self.pag_tab_camp = self.retorna_pagina_especifica(self.url_tab_camp)
+        self.times_campeonato = self.retorna_ids_times_camp()
+
+    def proc_tag_com_classe_ptc(self, tag, classe):
+        return self.pag_tab_camp.find_all(tag, {"class": classe})
+
+    def proc_somente_tag(self, html, tag):
+        return html.find_all(tag)
+
+    def retorna_ids_times_camp(self):
+        tds = proc_tag_com_classe_ptc(
+            'td', 'hauptlink no-border-links show-for-small show-for-pad')
+        ids = []
+        aux_1 = []
+        for i in range(len(tds)):
+            aux_1.append(self.proc_somente_tag(tds, 'a')[0]['href'])
+        for ii in range(len(aux_1)):
+            aux_1[ii] = aux_1[ii][1:]
+            aux_2 = aux_1[ii][self.proc_somente_tag(aux_1, 'verein/')+7:]
+            ids.append(aux_2[0:self.proc_somente_tag(aux_2, '/')])
+        return ids
+
+    def retorna_times_campeonato(self):
+        tds = proc_tag_com_classe_ptc(
+            'td', 'hauptlink no-border-links show-for-small show-for-pad')
+        times = []
+        aux_1 = []
+        for i in range(len(tds)):
+            aux_1.append(self.proc_somente_tag(tds, 'a')[0]['href'])
+        for ii in range(len(aux_1)):
+            aux_1[ii] = aux_1[ii][1:]
+            times.append(aux_1[ii][0:self.proc_somente_tag(aux_1, '/')])
+        return times
+
+    def retorna_times_ids(self):
+        times_ids = [[], []]
+        times = self.retorna_times_campeonato
+        ids = self.retorna_ids_times_camp
+        for i in range(len(times)):
+            times_ids[0].append = times[i]
+            times_ids[1].append = ids[i]
+        return times_ids
 
 
-def corrige_data(data):
-    data = data[data.find(' ')+1:]
-    data = data.strip()
-    data = data.replace('.', '/')
-    return data
+class pag_time(pag_tabela_campenatos):
+    def __init__(self, *args, **kwargs):
+        super(CLASS_NAME, self).__init__(*args, **kwargs)
+        self.
 
-
-def corrige_horario(horario):
-    horario = horario.replace('\n', '')
-    horario = horario.strip()
-    if horario == 'desconhecido':
-        horario = ''
-    return horario
-
-
-def corrige_resultado(resultado):
-    resultado = resultado.strip()
-    if resultado == '-:-':
-        resultado = ''
-    return resultado
-
-
-def corrige_rodada(rodada):
-    rodada = rodada.replace('\n', '')
-    rodada = rodada.replace('\t', '')
-    rodada = rodada.strip()
-    return rodada
-
-
-# Telling the site the we are a 'normal' browser
-headers = {'User-Agent':
-           'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36'}
 
 # Get the link to scrap
 link_liga = "https://www.transfermarkt.com.br/premier-league/startseite/wettbewerb/GB1/plus/?saison_id=2020"
